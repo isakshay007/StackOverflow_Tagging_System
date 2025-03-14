@@ -21,7 +21,7 @@ def fetch_stackoverflow_data(pages: int = 1, page_size: int = 100) -> List[Dict]
             'order': 'desc',
             'sort': 'activity',
             'filter': 'withbody',
-            'key': 'rl_cq2sRBQNVioV8uHVrp3oFypFV'  # Optional: Add your API key if you have one
+            'key': ''  # Optional: Add your API key if you have one
         }
 
 
