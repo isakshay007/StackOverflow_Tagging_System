@@ -1,5 +1,5 @@
-# StackOverflow_Tagging_System
-Autonomous Tagging System for StackOverflow
+#Autonomous Tagging System for StackOverflow
+
 📌 Overview
 The Autonomous Tagging System aims to improve the accuracy and efficiency of StackOverflow’s tagging process using Natural Language Processing (NLP) and Machine Learning. By analyzing both question descriptions and code snippets, our model predicts relevant tags automatically, reducing errors and improving discoverability.
 
@@ -34,8 +34,11 @@ Week	Task
 
 
 🔧 Setup & Installation
+
 Clone the repository:
+
 git clone https://github.com/your-repo/autonomous-tagging.git
+
 cd autonomous-tagging
 
 
