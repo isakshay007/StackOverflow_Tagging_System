@@ -69,7 +69,7 @@ def save_data_to_csv(data: List[Dict], file_path: str):
 
 if __name__ == "__main__":
     print("Starting data fetching...")  # Debugging statement
-    data = fetch_stackoverflow_data(pages=400)
+    data = fetch_stackoverflow_data(pages=10)
 
     if data:
         save_data_to_csv(data, 'data/stackoverflow_data.csv')
