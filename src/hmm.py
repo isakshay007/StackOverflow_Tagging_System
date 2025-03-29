@@ -3,10 +3,14 @@ import pandas as pd
 from collections import defaultdict, Counter
 import re
 import pickle
+import spacy
+from sklearn.metrics.pairwise import cosine_similarity
 from scipy.sparse import dok_matrix, csr_matrix
 
+# Load a pre-trained model (e.g., 'en_core_web_md' for medium-sized English model)
+nlp = spacy.load('en_core_web_md')
 
-class HMMTagger:
+class HMM_Tagger:
 
     def __init__(self):
         print('Initializing HMMTagger...')
@@ -18,7 +22,6 @@ class HMMTagger:
         self.pi = None                # Initial probabilities
         self.A = None                 # Transition probabilities
         self.B = None                 # Emission probabilities
-
 
     def save_model(self, file_path):
         model_data = {
@@ -32,7 +35,6 @@ class HMMTagger:
             pickle.dump(model_data, f)
         print(f'Model saved successfully to {file_path}')
 
-
     def load_model(self, file_path):
         with open(file_path, 'rb') as f:
             model_data = pickle.load(f)
@@ -44,7 +46,6 @@ class HMMTagger:
         self.word_to_index = model_data["word_to_index"]
         
         print(f'Model loaded successfully from {file_path}')
-
 
     def preprocess(self, text):
         print(f'Preprocessing text: {text[:50]}...')
@@ -128,30 +129,31 @@ class HMMTagger:
 
         self.B = csr_matrix(self.B)  # Convert to csr_matrix for further operations
 
-        #self.B = csr_matrix(self.B / np.maximum(self.B.sum(axis=1), 1))
-
         print('Training completed successfully.')
-        # hmm_tagger.save_model("hmm_model.pkl")
+
 
 
     def predict(self, sentence, top_n=5):
         print(f'Predicting tags for sentence: "{sentence}"')
+        
+        # Preprocess sentence
         words = self.preprocess(sentence)
         num_tags = len(self.tags)
         num_words = len(words)
-        print("Here!")
+        
+        # Initialize Viterbi and backpointer matrices
         viterbi = np.zeros((num_tags, num_words))
         backpointer = np.zeros((num_tags, num_words), dtype=int)
 
+        # Initialize the Viterbi matrix for the first word
         for tag_index in range(num_tags):
             word_index = self.word_to_index.get(words[0], -1)
             if word_index != -1:
                 viterbi[tag_index, 0] = self.pi[tag_index] * self.B[tag_index, word_index]
             else:
                 viterbi[tag_index, 0] = self.pi[tag_index] * (1e-6)
-        print("first for loop")
 
-        
+        # Iterate over the remaining words
         for t in range(1, num_words):
             word_index = self.word_to_index.get(words[t], -1)
             if word_index == -1:
@@ -160,20 +162,14 @@ class HMMTagger:
                 emission_probs = np.array(self.B[:, word_index].todense()).flatten()
                 emission_probs[emission_probs == 0] = 1e-6  # Handle zero probabilities
 
-            # Vectorized computation of the probability for all tags at once
             transition_probs = self.A.multiply(viterbi[:, t - 1].reshape(-1, 1)).tocsc()
-
             probs = transition_probs * emission_probs
 
-            # Find the maximum probability for each tag and its corresponding best previous tag
             best_prev_tags = np.argmax(probs, axis=0)
             best_probs = np.max(probs, axis=0)
 
             viterbi[:, t] = best_probs
             backpointer[:, t] = best_prev_tags
-
-        print("Second for loop")
-
 
         best_path_prob = np.max(viterbi[:, -1])
         best_last_tag = np.argmax(viterbi[:, -1])
@@ -183,23 +179,16 @@ class HMMTagger:
             best_path.insert(0, backpointer[best_path[0], t])
 
         predicted_tags = [self.tags[idx] for idx in best_path]
-        print(f'Predicted Tags: {predicted_tags}')
-        return predicted_tags
+
+        # Split each predicted tag into individual tags (comma-separated)
+        all_tags = []
+        for tag in predicted_tags:
+            all_tags.extend(tag.split(','))  # Split by commas and collect individual tags
+        
+        print(f'Raw Predicted Tags: {all_tags}')
+        
+        return all_tags  # Return raw predicted tags
 
 
 
-
-
-# hmm_tagger = HMMTagger()
-
-# # file_path = 'data/stackoverflow_data.csv'
-# # data = pd.read_csv(file_path)
-
-# hmm_tagger.fit(data)
-# hmm_tagger.save_model("hmm_model.pkl")
-
-
-# sentence = "How to train a deep learning model using Python"
-# predicted_tags = hmm_tagger.predict(sentence)
-
-# print("Predicted Tags:", predicted_tags)
+  
