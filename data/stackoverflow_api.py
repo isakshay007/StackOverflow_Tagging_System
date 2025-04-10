@@ -21,7 +21,7 @@ def fetch_stackoverflow_data(pages: int = 1, page_size: int = 100) -> List[Dict]
             'order': 'desc',
             'sort': 'activity',
             'filter': 'withbody',
-            'key': ''  # Optional: Add your API key if you have one
+            'key': 'rl_cq2sRBQNVioV8uHVrp3oFypFV'  # Optional: Add your API key if you have one
         }
 
 
@@ -32,6 +32,7 @@ def fetch_stackoverflow_data(pages: int = 1, page_size: int = 100) -> List[Dict]
             data = response.json().get('items', [])
             print(f"Number of questions fetched: {len(data)}")  # Debugging statement
             all_questions.extend(data)
+        
         else:
             print(f"Failed to fetch data. Status code: {response.status_code}")
             break
@@ -69,7 +70,7 @@ def save_data_to_csv(data: List[Dict], file_path: str):
 
 if __name__ == "__main__":
     print("Starting data fetching...")  # Debugging statement
-    data = fetch_stackoverflow_data(pages=400)
+    data = fetch_stackoverflow_data(pages=500)
 
     if data:
         save_data_to_csv(data, 'data/stackoverflow_data.csv')
