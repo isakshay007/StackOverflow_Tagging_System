@@ -3,12 +3,12 @@ import pandas as pd
 from collections import defaultdict, Counter
 import re
 import pickle
-import spacy
-from sklearn.metrics.pairwise import cosine_similarity
+# import spacy
+# from sklearn.metrics.pairwise import cosine_similarity
 from scipy.sparse import dok_matrix, csr_matrix
 
 # Load a pre-trained model (e.g., 'en_core_web_md' for medium-sized English model)
-nlp = spacy.load('en_core_web_md')
+# nlp = spacy.load('en_core_web_md')
 
 class HMM_Tagger:
 
@@ -29,7 +29,8 @@ class HMM_Tagger:
             "A": self.A,
             "B": self.B,
             "tags": self.tags,
-            "word_to_index": self.word_to_index
+            "word_to_index": self.word_to_index,
+            "word_frequencies": self.word_frequencies 
         }
         with open(file_path, 'wb') as f:
             pickle.dump(model_data, f)
@@ -44,17 +45,18 @@ class HMM_Tagger:
         self.B = model_data["B"]
         self.tags = model_data["tags"]
         self.word_to_index = model_data["word_to_index"]
+        self.word_frequencies = model_data.get("word_frequencies", {})
         
         print(f'Model loaded successfully from {file_path}')
 
     def preprocess(self, text):
-        print(f'Preprocessing text: {text[:50]}...')
+        # print(f'Preprocessing text: {text[:50]}...')
         if not isinstance(text, str):
             text = ""
         text = text.lower()
         text = re.sub(r"[^a-z0-9\s]", "", text)
         words = text.split()
-        print(f'Preprocessed words: {words[:10]}')
+        # print(f'Preprocessed words: {words[:10]}')
         return words
 
     def prepare_data(self, data):
@@ -63,10 +65,8 @@ class HMM_Tagger:
         vocab_set = set()
 
         for index, row in data.iterrows():
-            tags = row['Tags'].split()  # Assuming tags are space-separated
-            title = row['Title'] if isinstance(row['Title'], str) else ""
-            description = row['Question'] if isinstance(row['Question'], str) else ""
-            sentence = title + " " + description
+            tags = [t.strip() for t in row['tags'].split(',') if t.strip()]
+            sentence = row['text'] if isinstance(row['text'], str) else ""
             words = self.preprocess(sentence)
 
             for tag in tags:
@@ -88,6 +88,10 @@ class HMM_Tagger:
     def fit(self, data):
         print('Fitting the model to the data...')
         tag_sentences = self.prepare_data(data)
+        self.word_frequencies = Counter()
+        for tag, sentences in tag_sentences.items():
+            for sentence in sentences:
+                self.word_frequencies.update(sentence)
         self.train(tag_sentences)
 
     def train(self, tag_sentences):
@@ -133,62 +137,109 @@ class HMM_Tagger:
 
 
 
-    def predict(self, sentence, top_n=5):
-        print(f'Predicting tags for sentence: "{sentence}"')
+    # def predict(self, sentence, top_n=5):
+    #     print(f'Predicting tags for sentence: "{sentence}"')
         
-        # Preprocess sentence
+    #     # Preprocess sentence
+    #     words = self.preprocess(sentence)
+    #     num_tags = len(self.tags)
+    #     num_words = len(words)
+        
+    #     # Initialize Viterbi and backpointer matrices
+    #     viterbi = np.zeros((num_tags, num_words))
+    #     backpointer = np.zeros((num_tags, num_words), dtype=int)
+
+    #     # Initialize the Viterbi matrix for the first word
+    #     for tag_index in range(num_tags):
+    #         word_index = self.word_to_index.get(words[0], -1)
+    #         if word_index != -1:
+    #             viterbi[tag_index, 0] = self.pi[tag_index] * self.B[tag_index, word_index]
+    #         else:
+    #             viterbi[tag_index, 0] = self.pi[tag_index] * (1e-6)
+
+    #     # Iterate over the remaining words
+    #     for t in range(1, num_words):
+    #         word_index = self.word_to_index.get(words[t], -1)
+    #         if word_index == -1:
+    #             emission_probs = np.full(num_tags, 1e-6)
+    #         else:
+    #             emission_probs = np.array(self.B[:, word_index].todense()).flatten()
+    #             emission_probs[emission_probs == 0] = 1e-6  # Handle zero probabilities
+
+    #         transition_probs = self.A.multiply(viterbi[:, t - 1].reshape(-1, 1)).tocsc()
+    #         probs = transition_probs * emission_probs
+
+    #         best_prev_tags = np.argmax(probs, axis=0)
+    #         best_probs = np.max(probs, axis=0)
+
+    #         viterbi[:, t] = best_probs
+    #         backpointer[:, t] = best_prev_tags
+
+    #     best_path_prob = np.max(viterbi[:, -1])
+    #     best_last_tag = np.argmax(viterbi[:, -1])
+
+    #     best_path = [best_last_tag]
+    #     for t in range(num_words - 1, 0, -1):
+    #         best_path.insert(0, backpointer[best_path[0], t])
+
+    #     predicted_tags = [self.tags[idx] for idx in best_path]
+
+    #     # Split each predicted tag into individual tags (comma-separated)
+    #     all_tags = []
+    #     for tag in predicted_tags:
+    #         all_tags.extend(tag.split(','))  # Split by commas and collect individual tags
+        
+    #     print(f'Raw Predicted Tags: {all_tags}')
+        
+    #     return all_tags  # Return raw predicted tags
+
+
+    def predict(self, sentence, top_n = 10):
+        print(f'Predicting tags for sentence: "{sentence}"')
+
         words = self.preprocess(sentence)
         num_tags = len(self.tags)
-        num_words = len(words)
-        
-        # Initialize Viterbi and backpointer matrices
-        viterbi = np.zeros((num_tags, num_words))
-        backpointer = np.zeros((num_tags, num_words), dtype=int)
 
-        # Initialize the Viterbi matrix for the first word
-        for tag_index in range(num_tags):
-            word_index = self.word_to_index.get(words[0], -1)
-            if word_index != -1:
-                viterbi[tag_index, 0] = self.pi[tag_index] * self.B[tag_index, word_index]
-            else:
-                viterbi[tag_index, 0] = self.pi[tag_index] * (1e-6)
+        tag_scores = np.log(self.pi + 1e-10)  # Avoid log(0)
 
-        # Iterate over the remaining words
-        for t in range(1, num_words):
-            word_index = self.word_to_index.get(words[t], -1)
+        for word in words:
+            word_index = self.word_to_index.get(word, -1)
             if word_index == -1:
-                emission_probs = np.full(num_tags, 1e-6)
+                word_probs = np.log(np.full(num_tags, 1e-6))
             else:
                 emission_probs = np.array(self.B[:, word_index].todense()).flatten()
-                emission_probs[emission_probs == 0] = 1e-6  # Handle zero probabilities
+                emission_probs[emission_probs == 0] = 1e-6
+                word_probs = np.log(emission_probs)
 
-            transition_probs = self.A.multiply(viterbi[:, t - 1].reshape(-1, 1)).tocsc()
-            probs = transition_probs * emission_probs
+            tag_scores += word_probs
 
-            best_prev_tags = np.argmax(probs, axis=0)
-            best_probs = np.max(probs, axis=0)
+        # Get top-N scored compound tags
+        top_indices = np.argsort(tag_scores)[::-1][:top_n * 3]  # Fetch more in case of splitting
+        tag_score_pairs = [(self.tags[i], tag_scores[i]) for i in top_indices]
 
-            viterbi[:, t] = best_probs
-            backpointer[:, t] = best_prev_tags
+        # Split and score each subtag
+        subtag_scores = {}
+        for compound_tag, score in tag_score_pairs:
+            for subtag in compound_tag.split(','):
+                subtag = subtag.strip()
+                if subtag:  # Avoid empty entries
+                    # Keep highest score if subtag appears multiple times
+                    if subtag not in subtag_scores or subtag_scores[subtag] < score:
+                        subtag_scores[subtag] = score
 
-        best_path_prob = np.max(viterbi[:, -1])
-        best_last_tag = np.argmax(viterbi[:, -1])
+        # Sort individual subtags by score
+        sorted_subtags = sorted(subtag_scores.items(), key=lambda x: x[1], reverse=True)
 
-        best_path = [best_last_tag]
-        for t in range(num_words - 1, 0, -1):
-            best_path.insert(0, backpointer[best_path[0], t])
-
-        predicted_tags = [self.tags[idx] for idx in best_path]
-
-        # Split each predicted tag into individual tags (comma-separated)
-        all_tags = []
-        for tag in predicted_tags:
-            all_tags.extend(tag.split(','))  # Split by commas and collect individual tags
-        
-        print(f'Raw Predicted Tags: {all_tags}')
-        
-        return all_tags  # Return raw predicted tags
+        # Return top-N clean tags
+        final_tags = [tag for tag, _ in sorted_subtags[:top_n]]
+        print(f'Predicted Tags: {final_tags}')
+        return final_tags
 
 
 
-  
+
+# import pandas as pd
+# training_dataframe = pd.read_csv("data/train_split.csv")
+# tagger = HMM_Tagger()
+# tagger.fit(training_dataframe)  # The one with Title, Question, Tags
+# tagger.save_model('hmm_model3.pkl')  # Optional: save after retraining
