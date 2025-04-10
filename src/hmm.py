@@ -195,7 +195,7 @@ class HMM_Tagger:
 
 
     def predict(self, sentence, top_n = 10):
-        print(f'Predicting tags for sentence: "{sentence}"')
+        # print(f'Predicting tags for sentence: "{sentence}"')
 
         words = self.preprocess(sentence)
         num_tags = len(self.tags)
@@ -232,7 +232,7 @@ class HMM_Tagger:
 
         # Return top-N clean tags
         final_tags = [tag for tag, _ in sorted_subtags[:top_n]]
-        print(f'Predicted Tags: {final_tags}')
+        # print(f'Predicted Tags: {final_tags}')
         return final_tags
 
 

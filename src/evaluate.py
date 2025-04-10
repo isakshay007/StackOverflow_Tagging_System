@@ -3,7 +3,8 @@ import pandas as pd
 from hmm import HMM_Tagger
 
 # Load the dataset
-test_df = pd.read_csv("data/val_split.csv")  
+df = pd.read_csv("data/val_split.csv")  
+test_df = df.sample(n=500, random_state=42).reset_index(drop=True)
 
 def evaluate_model(model, test_data, k=5):
     total = 0
@@ -31,10 +32,10 @@ def evaluate_model(model, test_data, k=5):
     avg_f1 = 2 * avg_precision * avg_recall / (avg_precision + avg_recall + 1e-10)
     avg_jaccard = jaccard_sum / total
 
-    print(f"Precision@{k}: {avg_precision:.4f}")
-    print(f"Recall@{k}:    {avg_recall:.4f}")
-    print(f"F1@{k}:        {avg_f1:.4f}")
-    print(f"Jaccard@{k}:   {avg_jaccard:.4f}")
+    print(f"Precision: {avg_precision:.4f}")
+    print(f"Recall:    {avg_recall:.4f}")
+    print(f"F1:        {avg_f1:.4f}")
+    print(f"Jaccard:   {avg_jaccard:.4f}")
 
 # Load model and evaluate
 hmm_tagger = HMM_Tagger()
