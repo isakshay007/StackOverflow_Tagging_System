@@ -1,0 +1,28 @@
+# Core Packages
+streamlit
+pandas
+numpy<2.0
+joblib
+tqdm
+
+# Machine Learning
+scikit-learn
+scipy
+
+# NLP & Text Processing
+spacy
+transformers
+
+torch
+
+# Hugging Face Hub (for model downloads)
+huggingface_hub
+
+# Optional: Faster downloads via Hugging Face Xet Storage
+hf_xet
+
+# NOTE: Install spaCy model separately
+# Run this manually after setting up: 
+# python -m spacy download en_core_web_md
+# OR use direct download (if needed):
+https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.8.0/en_core_web_md-3.8.0.tar.gz
