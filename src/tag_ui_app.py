@@ -59,7 +59,7 @@ def predict_ml(model, mlb, text, threshold=0.08):
 
 def predict_hmm(model, title, description):
     text = f"{title.strip()} {description.strip()}"
-    return model.predict(text)  # already returns top 5
+    return model.predict(text)  # returns top 5 tags
 
 def predict_bert(text, model, tokenizer, mlb, threshold=0.05, show_top_k=5, fallback=True):
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding="max_length", max_length=128)
@@ -77,11 +77,9 @@ def predict_bert(text, model, tokenizer, mlb, threshold=0.05, show_top_k=5, fall
 st.set_page_config(page_title="StackOverflow Tag Generator", layout="wide")
 st.title("🚀 StackOverflow Tag Generator")
 
-# Track model selection
 if "model_selected" not in st.session_state:
     st.session_state.model_selected = None
 
-# Model Selection Dropdown
 model_choice = st.selectbox("📊 Choose a Tag Prediction Model", [
     "Logistic Regression (ML)",
     "Hidden Markov Model (HMM)",
@@ -97,7 +95,7 @@ if st.button("✅ Select Model"):
     elif model_choice == "DistilBERT Transformer":
         st.session_state.bert_model, st.session_state.mlb_bert, st.session_state.tokenizer = load_bert()
 
-# Input Fields
+# Input Section
 if st.session_state.model_selected:
     st.subheader(f"📝 Enter Question for {st.session_state.model_selected}")
     title = st.text_input("📌 Title", placeholder="e.g., How to resolve CORS error in JavaScript?")
@@ -120,9 +118,12 @@ if st.session_state.model_selected:
 
                 elif st.session_state.model_selected == "Hidden Markov Model (HMM)":
                     tags = predict_hmm(st.session_state.hmm_model, title, description)
-                    print("DEBUG | HMM Predicted Tags:", tags)
                     st.subheader("🎯 Tags")
-                    st.write(", ".join(tags) if tags else "No tags found.")
+                    if not tags:
+                        st.warning("No tags found.")
+                    else:
+                        for tag in tags[:5]:
+                            st.markdown(f"- **{tag}**")
 
                 elif st.session_state.model_selected == "DistilBERT Transformer":
                     text = f"{title.strip()} {description.strip()}"
