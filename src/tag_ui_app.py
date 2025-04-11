@@ -55,11 +55,11 @@ def predict_ml(model, mlb, text, threshold=0.08):
     probs = model.predict_proba([text])[0]
     sorted_probs = sorted(zip(mlb.classes_, probs), key=lambda x: x[1], reverse=True)
     tags = [tag for tag, score in sorted_probs if score >= threshold]
-    return tags, sorted_probs
+    return tags[:5]
 
 def predict_hmm(model, title, description):
     text = f"{title.strip()} {description.strip()}"
-    return model.predict(text)  # returns top 5 tags
+    return model.predict(text)  # already returns top 5
 
 def predict_bert(text, model, tokenizer, mlb, threshold=0.05, show_top_k=5, fallback=True):
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding="max_length", max_length=128)
@@ -71,7 +71,7 @@ def predict_bert(text, model, tokenizer, mlb, threshold=0.05, show_top_k=5, fall
     tags = [mlb.classes_[i] for i in indices]
     if fallback and not tags:
         tags = [mlb.classes_[i] for i, _ in top_probs]
-    return tags, [(mlb.classes_[i], p) for i, p in top_probs]
+    return tags[:5]
 
 # ========= STREAMLIT UI =========
 st.set_page_config(page_title="StackOverflow Tag Generator", layout="wide")
@@ -95,7 +95,7 @@ if st.button("✅ Select Model"):
     elif model_choice == "DistilBERT Transformer":
         st.session_state.bert_model, st.session_state.mlb_bert, st.session_state.tokenizer = load_bert()
 
-# Input Section
+# Input
 if st.session_state.model_selected:
     st.subheader(f"📝 Enter Question for {st.session_state.model_selected}")
     title = st.text_input("📌 Title", placeholder="e.g., How to resolve CORS error in JavaScript?")
@@ -106,38 +106,17 @@ if st.session_state.model_selected:
             st.warning("Please provide at least a title or description.")
         else:
             with st.spinner("Generating tags..."):
-
                 if st.session_state.model_selected == "Logistic Regression (ML)":
                     text = f"{title.strip()} {description.strip()}"
-                    tags, scores = predict_ml(st.session_state.ml_model, st.session_state.mlb_ml, text)
-                    st.subheader("🎯 Tags")
-                    st.write(", ".join(tags[:5]) if tags else "No tags found.")
-                    st.subheader("📊 Top Probabilities")
-                    for tag, score in scores[:5]:
-                        st.write(f"**{tag}**: {score:.3f}")
-
+                    tags = predict_ml(st.session_state.ml_model, st.session_state.mlb_ml, text)
                 elif st.session_state.model_selected == "Hidden Markov Model (HMM)":
                     tags = predict_hmm(st.session_state.hmm_model, title, description)
-                    st.subheader("🎯 Tags")
-                    if not tags:
-                        st.warning("No tags found.")
-                    else:
-                        for tag in tags[:5]:
-                            st.markdown(f"- **{tag}**")
-
                 elif st.session_state.model_selected == "DistilBERT Transformer":
                     text = f"{title.strip()} {description.strip()}"
-                    tags, scores = predict_bert(
-                        text,
-                        st.session_state.bert_model,
-                        st.session_state.tokenizer,
-                        st.session_state.mlb_bert
-                    )
-                    st.subheader("🎯 Tags")
-                    st.write(", ".join(tags[:5]) if tags else "No tags found.")
-                    st.subheader("📊 Top Scores")
-                    for tag, prob in scores[:5]:
-                        st.write(f"**{tag}**: {prob:.3f}")
+                    tags = predict_bert(text, st.session_state.bert_model, st.session_state.tokenizer, st.session_state.mlb_bert)
+                
+                st.subheader("🎯 Tags")
+                st.write(", ".join(tags) if tags else "No tags found.")
 
 # Footer
 st.markdown("---")
