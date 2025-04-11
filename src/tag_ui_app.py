@@ -59,7 +59,7 @@ def predict_ml(model, mlb, text, threshold=0.08):
 
 def predict_hmm(model, title, description):
     text = f"{title.strip()} {description.strip()}"
-    return model.predict(text)  # already returns top 5
+    return model.predict(text)[:5]
 
 def predict_bert(text, model, tokenizer, mlb, threshold=0.05, show_top_k=5, fallback=True):
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding="max_length", max_length=128)
@@ -114,7 +114,7 @@ if st.session_state.model_selected:
                 elif st.session_state.model_selected == "DistilBERT Transformer":
                     text = f"{title.strip()} {description.strip()}"
                     tags = predict_bert(text, st.session_state.bert_model, st.session_state.tokenizer, st.session_state.mlb_bert)
-                
+
                 st.subheader("🎯 Tags")
                 st.write(", ".join(tags) if tags else "No tags found.")
 
