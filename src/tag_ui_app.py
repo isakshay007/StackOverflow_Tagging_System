@@ -53,16 +53,13 @@ def load_bert():
     model.eval()
     return model, mlb, tokenizer
 
-def predict_ml(model, mlb, title, description, threshold=0.08):
-    text = f"{title} {description}"
+def predict_ml(model, mlb, text, threshold=0.08):
     probs = model.predict_proba([text])[0]
     sorted_probs = sorted(zip(mlb.classes_, probs), key=lambda x: x[1], reverse=True)
     tags = [tag for tag, score in sorted_probs if score >= threshold]
     return tags, sorted_probs
 
-# ✅ UPDATED HMM PREDICTION FUNCTION — NO FILTERING
-def predict_hmm(model, title, description):
-    text = f"{title} {description}"
+def predict_hmm(model, text):
     predicted_tags = model.predict(text)
     return predicted_tags
 
@@ -82,7 +79,6 @@ def predict_bert(text, model, tokenizer, mlb, threshold=0.05, show_top_k=5, fall
 st.set_page_config(page_title="StackOverflow Tag Generator", layout="wide")
 st.title("🚀 StackOverflow Tag Generator")
 
-# Initialize session state
 if "model_selected" not in st.session_state:
     st.session_state.model_selected = None
 
@@ -105,16 +101,18 @@ if st.button("✅ Select Model"):
 # Input Section
 if st.session_state.model_selected:
     st.subheader(f"📝 Enter Question for {st.session_state.model_selected}")
-    title = st.text_input("📌 Title", placeholder="e.g., How to merge dictionaries in Python?")
+    title = st.text_input("📌 Title", placeholder="e.g., How to resolve CORS error in JavaScript?")
     description = st.text_area("🧐 Description", height=200, placeholder="Include details, errors, etc.")
 
     if st.button("🔍 Generate Tags"):
-        if not title.strip() or not description.strip():
-            st.warning("Please provide both title and description.")
+        if not title.strip() and not description.strip():
+            st.warning("Please provide at least a title or description.")
         else:
             with st.spinner("Generating tags..."):
+                combined_text = f"{title.strip()}. {description.strip()}"
+                
                 if st.session_state.model_selected == "Logistic Regression (ML)":
-                    tags, scores = predict_ml(st.session_state.ml_model, st.session_state.mlb_ml, title, description)
+                    tags, scores = predict_ml(st.session_state.ml_model, st.session_state.mlb_ml, combined_text)
                     st.subheader("Predicted Tags:")
                     st.write(", ".join(tags) if tags else "No tags found.")
                     st.subheader("Top Tag Probabilities:")
@@ -122,16 +120,17 @@ if st.session_state.model_selected:
                         st.write(f"**{tag}**: {score:.3f}")
 
                 elif st.session_state.model_selected == "Hidden Markov Model (HMM)":
-                    tags = predict_hmm(st.session_state.hmm_model, title, description)
+                    tags = predict_hmm(st.session_state.hmm_model, combined_text)
                     st.subheader("🎯 Tags")
                     if not tags:
-                        st.write("No tags found.")
+                        st.warning("No tags found.")
                     else:
+                        st.success("✅ Tags generated:")
                         st.write(", ".join(tags))
 
                 elif st.session_state.model_selected == "DistilBERT Transformer":
                     tags, scores = predict_bert(
-                        f"{title} {description}",
+                        combined_text,
                         st.session_state.bert_model,
                         st.session_state.tokenizer,
                         st.session_state.mlb_bert
