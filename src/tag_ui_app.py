@@ -60,7 +60,7 @@ def load_bert():
     return model, mlb, tokenizer
 
 # ========= PREDICTION FUNCTIONS =========
-def predict_ml(model, mlb, vectorizer, text, threshold=0.08):
+def predict_ml(model, mlb, vectorizer, text, threshold=0.05):
     X = vectorizer.transform([text])
     probs = model.predict_proba(X)[0]
     sorted_probs = sorted(zip(mlb.classes_, probs), key=lambda x: x[1], reverse=True)
