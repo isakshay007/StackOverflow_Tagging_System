@@ -28,9 +28,18 @@ class MiniTagTransformer(nn.Module):
 # ========= LOADERS =========
 @st.cache_resource(show_spinner=False)
 def load_ml():
-    model = joblib.load("models/tagging_model.pkl")
-    mlb = joblib.load("models/tagging_mlb.pkl")
-    return model, mlb
+    model_path = hf_hub_download(repo_id="iakshay777/stackoverflow-tag-model", filename="logistic_model.pkl", repo_type="model")
+    mlb_path = hf_hub_download(repo_id="iakshay777/stackoverflow-tag-model", filename="mlb_logistics.pkl", repo_type="model")
+    tfidf_path = hf_hub_download(repo_id="iakshay777/stackoverflow-tag-model", filename="tfidf_vectorizer.pkl", repo_type="model")
+
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
+    with open(mlb_path, "rb") as f:
+        mlb = pickle.load(f)
+    with open(tfidf_path, "rb") as f:
+        vectorizer = pickle.load(f)
+
+    return model, mlb, vectorizer
 
 @st.cache_resource(show_spinner=False)
 def load_hmm():
@@ -50,8 +59,10 @@ def load_bert():
     model.eval()
     return model, mlb, tokenizer
 
-def predict_ml(model, mlb, text, threshold=0.08):
-    probs = model.predict_proba([text])[0]
+# ========= PREDICTION FUNCTIONS =========
+def predict_ml(model, mlb, vectorizer, text, threshold=0.08):
+    X = vectorizer.transform([text])
+    probs = model.predict_proba(X)[0]
     sorted_probs = sorted(zip(mlb.classes_, probs), key=lambda x: x[1], reverse=True)
     tags = [tag for tag, score in sorted_probs if score >= threshold]
     return tags[:5]
@@ -73,7 +84,7 @@ def predict_bert(text, model, tokenizer, mlb, threshold=0.05, show_top_k=5, fall
     return tags[:5]
 
 # ========= STREAMLIT UI =========
-st.set_page_config(page_title="StackOverflow Generator", layout="wide")
+st.set_page_config(page_title="StackOverflow Tag Generator", layout="wide")
 
 st.markdown(
     """
@@ -94,10 +105,10 @@ model_choice = st.selectbox("Choose a Tag Prediction Model below :", [
     "DistilBERT Transformer"
 ], index=0)
 
-if st.button("Select ✅ "):
+if st.button("Select Model ✅ "):
     st.session_state.model_selected = model_choice
     if model_choice == "Logistic Regression (ML)":
-        st.session_state.ml_model, st.session_state.mlb_ml = load_ml()
+        st.session_state.ml_model, st.session_state.mlb_ml, st.session_state.vectorizer_ml = load_ml()
     elif model_choice == "Hidden Markov Model (HMM)":
         st.session_state.hmm_model = load_hmm()
     elif model_choice == "DistilBERT Transformer":
@@ -116,7 +127,7 @@ if st.session_state.model_selected:
             with st.spinner("Generating tags..."):
                 if st.session_state.model_selected == "Logistic Regression (ML)":
                     text = f"{title.strip()} {description.strip()}"
-                    tags = predict_ml(st.session_state.ml_model, st.session_state.mlb_ml, text)
+                    tags = predict_ml(st.session_state.ml_model, st.session_state.mlb_ml, st.session_state.vectorizer_ml, text)
                 elif st.session_state.model_selected == "Hidden Markov Model (HMM)":
                     tags = predict_hmm(st.session_state.hmm_model, title, description)
                 elif st.session_state.model_selected == "DistilBERT Transformer":
