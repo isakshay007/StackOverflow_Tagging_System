@@ -75,18 +75,27 @@ def predict_bert(text, model, tokenizer, mlb, threshold=0.05, show_top_k=5, fall
 
 # ========= STREAMLIT UI =========
 st.set_page_config(page_title="StackOverflow Tag Generator", layout="wide")
-st.title("🚀 StackOverflow Tag Generator")
+
+st.markdown(
+    """
+    <div style="display: flex; align-items: center;">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Stack_Overflow_icon.svg" alt="StackOverflow Logo" width="40" style="margin-right: 10px;" />
+        <h1 style="margin: 0;">StackOverflow Tag Generator</h1>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 if "model_selected" not in st.session_state:
     st.session_state.model_selected = None
 
-model_choice = st.selectbox("📊 Choose a Tag Prediction Model", [
+model_choice = st.selectbox("Choose a Tag Prediction Model below :", [
     "Logistic Regression (ML)",
     "Hidden Markov Model (HMM)",
     "DistilBERT Transformer"
 ], index=0)
 
-if st.button("✅ Select Model"):
+if st.button("Select Model ✅ "):
     st.session_state.model_selected = model_choice
     if model_choice == "Logistic Regression (ML)":
         st.session_state.ml_model, st.session_state.mlb_ml = load_ml()
@@ -95,13 +104,13 @@ if st.button("✅ Select Model"):
     elif model_choice == "DistilBERT Transformer":
         st.session_state.bert_model, st.session_state.mlb_bert, st.session_state.tokenizer = load_bert()
 
-# Input
+# Input Section
 if st.session_state.model_selected:
     st.subheader(f"📝 Enter Question for {st.session_state.model_selected}")
-    title = st.text_input("📌 Title", placeholder="e.g., How to resolve CORS error in JavaScript?")
-    description = st.text_area("🧐 Description", height=200, placeholder="Include details, errors, etc.")
+    title = st.text_input("Title", placeholder="e.g., How to resolve CORS error in JavaScript?")
+    description = st.text_area(" Description", height=200, placeholder="Include details, errors, etc.")
 
-    if st.button("🔍 Generate Tags"):
+    if st.button(" Generate Tags"):
         if not title.strip() and not description.strip():
             st.warning("Please provide at least a title or description.")
         else:
@@ -115,9 +124,9 @@ if st.session_state.model_selected:
                     text = f"{title.strip()} {description.strip()}"
                     tags = predict_bert(text, st.session_state.bert_model, st.session_state.tokenizer, st.session_state.mlb_bert)
 
-                st.subheader("🎯 Tags")
+                st.subheader("Predicted Tags:")
                 st.write(", ".join(tags) if tags else "No tags found.")
 
 # Footer
 st.markdown("---")
-st.caption("Built with ❤️ using Streamlit, Transformers, and scikit-learn")
+st.caption("Built using Logistic Regression, HMM Model, and DistilBERT Transformer")
