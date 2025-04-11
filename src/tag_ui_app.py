@@ -120,6 +120,7 @@ if st.session_state.model_selected:
 
                 elif st.session_state.model_selected == "Hidden Markov Model (HMM)":
                     tags = predict_hmm(st.session_state.hmm_model, title, description)
+                    print("DEBUG | HMM Predicted Tags:", tags)
                     st.subheader("🎯 Tags")
                     st.write(", ".join(tags) if tags else "No tags found.")
 
