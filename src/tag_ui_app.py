@@ -94,7 +94,7 @@ model_choice = st.selectbox("Choose a Tag Prediction Model below :", [
     "DistilBERT Transformer"
 ], index=0)
 
-if st.button("Select Model ✅ "):
+if st.button("Select ✅ "):
     st.session_state.model_selected = model_choice
     if model_choice == "Logistic Regression (ML)":
         st.session_state.ml_model, st.session_state.mlb_ml = load_ml()
