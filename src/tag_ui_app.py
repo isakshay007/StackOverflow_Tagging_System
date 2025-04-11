@@ -50,7 +50,6 @@ def load_bert():
     model.eval()
     return model, mlb, tokenizer
 
-# ========= PREDICTION FUNCTIONS =========
 def predict_ml(model, mlb, text, threshold=0.08):
     probs = model.predict_proba([text])[0]
     sorted_probs = sorted(zip(mlb.classes_, probs), key=lambda x: x[1], reverse=True)
@@ -74,7 +73,7 @@ def predict_bert(text, model, tokenizer, mlb, threshold=0.05, show_top_k=5, fall
     return tags[:5]
 
 # ========= STREAMLIT UI =========
-st.set_page_config(page_title="StackOverflow Tag Generator", layout="wide")
+st.set_page_config(page_title="StackOverflow Generator", layout="wide")
 
 st.markdown(
     """
