@@ -194,7 +194,7 @@ class HMM_Tagger:
     #     return all_tags  # Return raw predicted tags
 
 
-    def predict(self, sentence, top_n = 10):
+    def predict(self, sentence, top_n = 5):
         # print(f'Predicting tags for sentence: "{sentence}"')
 
         words = self.preprocess(sentence)

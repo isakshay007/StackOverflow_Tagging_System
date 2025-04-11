@@ -9,7 +9,7 @@ from transformers import DistilBertTokenizer, DistilBertModel
 from huggingface_hub import hf_hub_download
 from hmm import HMM_Tagger
 
-# 🩹 Patch for PyTorch/Streamlit compatibility
+# 🩹 Fix for PyTorch+Streamlit reload bug
 if not hasattr(torch.classes, '__path__'):
     torch.classes.__path__ = types.SimpleNamespace(_path=[])
 
@@ -59,7 +59,7 @@ def predict_ml(model, mlb, text, threshold=0.08):
 
 def predict_hmm(model, title, description):
     text = f"{title.strip()} {description.strip()}"
-    return model.predict(text)
+    return model.predict(text)  # already returns top 5
 
 def predict_bert(text, model, tokenizer, mlb, threshold=0.05, show_top_k=5, fallback=True):
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding="max_length", max_length=128)
@@ -77,10 +77,11 @@ def predict_bert(text, model, tokenizer, mlb, threshold=0.05, show_top_k=5, fall
 st.set_page_config(page_title="StackOverflow Tag Generator", layout="wide")
 st.title("🚀 StackOverflow Tag Generator")
 
-# Session model selection
+# Track model selection
 if "model_selected" not in st.session_state:
     st.session_state.model_selected = None
 
+# Model Selection Dropdown
 model_choice = st.selectbox("📊 Choose a Tag Prediction Model", [
     "Logistic Regression (ML)",
     "Hidden Markov Model (HMM)",
@@ -96,7 +97,7 @@ if st.button("✅ Select Model"):
     elif model_choice == "DistilBERT Transformer":
         st.session_state.bert_model, st.session_state.mlb_bert, st.session_state.tokenizer = load_bert()
 
-# Input
+# Input Fields
 if st.session_state.model_selected:
     st.subheader(f"📝 Enter Question for {st.session_state.model_selected}")
     title = st.text_input("📌 Title", placeholder="e.g., How to resolve CORS error in JavaScript?")
@@ -109,12 +110,12 @@ if st.session_state.model_selected:
             with st.spinner("Generating tags..."):
 
                 if st.session_state.model_selected == "Logistic Regression (ML)":
-                    combined_text = f"{title.strip()} {description.strip()}"
-                    tags, scores = predict_ml(st.session_state.ml_model, st.session_state.mlb_ml, combined_text)
+                    text = f"{title.strip()} {description.strip()}"
+                    tags, scores = predict_ml(st.session_state.ml_model, st.session_state.mlb_ml, text)
                     st.subheader("🎯 Tags")
-                    st.write(", ".join(tags) if tags else "No tags found.")
+                    st.write(", ".join(tags[:5]) if tags else "No tags found.")
                     st.subheader("📊 Top Probabilities")
-                    for tag, score in scores[:10]:
+                    for tag, score in scores[:5]:
                         st.write(f"**{tag}**: {score:.3f}")
 
                 elif st.session_state.model_selected == "Hidden Markov Model (HMM)":
@@ -123,17 +124,17 @@ if st.session_state.model_selected:
                     st.write(", ".join(tags) if tags else "No tags found.")
 
                 elif st.session_state.model_selected == "DistilBERT Transformer":
-                    combined_text = f"{title.strip()} {description.strip()}"
+                    text = f"{title.strip()} {description.strip()}"
                     tags, scores = predict_bert(
-                        combined_text,
+                        text,
                         st.session_state.bert_model,
                         st.session_state.tokenizer,
                         st.session_state.mlb_bert
                     )
                     st.subheader("🎯 Tags")
-                    st.write(", ".join(tags) if tags else "No tags found.")
+                    st.write(", ".join(tags[:5]) if tags else "No tags found.")
                     st.subheader("📊 Top Scores")
-                    for tag, prob in scores:
+                    for tag, prob in scores[:5]:
                         st.write(f"**{tag}**: {prob:.3f}")
 
 # Footer
