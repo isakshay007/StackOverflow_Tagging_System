@@ -3,7 +3,7 @@ import numpy as np
 
 # Load the HMM model
 hmm_tagger = HMM_Tagger()
-hmm_tagger.load_model("hmm_model3.pkl")
+hmm_tagger.load_model("models/hmm_model3.pkl")
 print("Model Loaded")
 
 # Predict raw tags for a new sentence
@@ -45,13 +45,14 @@ fetch('https://api.example.com/data', {
 
 # Predict raw tags for the combined sentence
 predicted_tags = hmm_tagger.predict(example_question_1) 
-# print(predicted_tags)
+print(predicted_tags)
 
 # Preprocess the input sentence and raw predicted tags
 def preprocess(text):
     return text.lower()
 
 input_sentence = preprocess(example_question_1)
+
 
 
 

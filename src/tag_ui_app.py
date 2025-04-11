@@ -7,8 +7,6 @@ import types
 from torch import nn
 from transformers import DistilBertTokenizer, DistilBertModel
 from huggingface_hub import hf_hub_download
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 from hmm import HMM_Tagger
 
 # 🩹 Patch for PyTorch/Streamlit compatibility
@@ -62,13 +60,11 @@ def predict_ml(model, mlb, title, description, threshold=0.08):
     tags = [tag for tag, score in sorted_probs if score >= threshold]
     return tags, sorted_probs
 
-def predict_hmm(model, title, description, threshold=0.1):
+# ✅ UPDATED HMM PREDICTION FUNCTION — NO FILTERING
+def predict_hmm(model, title, description):
     text = f"{title} {description}"
-    predicted = list(set(preprocess(tag) for tag in model.predict(text)))
-    tfidf_matrix = TfidfVectorizer().fit_transform([description] + predicted)
-    sims = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:]).flatten()
-    filtered = [(tag, sim) for tag, sim in zip(predicted, sims) if sim >= threshold]
-    return sorted(filtered, key=lambda x: x[1], reverse=True)
+    predicted_tags = model.predict(text)
+    return predicted_tags
 
 def predict_bert(text, model, tokenizer, mlb, threshold=0.05, show_top_k=5, fallback=True):
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding="max_length", max_length=128)
@@ -119,17 +115,19 @@ if st.session_state.model_selected:
             with st.spinner("Generating tags..."):
                 if st.session_state.model_selected == "Logistic Regression (ML)":
                     tags, scores = predict_ml(st.session_state.ml_model, st.session_state.mlb_ml, title, description)
-                    st.subheader("🎯 Tags")
+                    st.subheader("Predicted Tags:")
                     st.write(", ".join(tags) if tags else "No tags found.")
-                    st.subheader("📊 Probabilities")
+                    st.subheader("Top Tag Probabilities:")
                     for tag, score in scores[:10]:
                         st.write(f"**{tag}**: {score:.3f}")
 
                 elif st.session_state.model_selected == "Hidden Markov Model (HMM)":
-                    results = predict_hmm(st.session_state.hmm_model, title, description)
+                    tags = predict_hmm(st.session_state.hmm_model, title, description)
                     st.subheader("🎯 Tags")
-                    for tag, score in results[:10]:
-                        st.write(f"**{tag}**: {score:.3f}")
+                    if not tags:
+                        st.write("No tags found.")
+                    else:
+                        st.write(", ".join(tags))
 
                 elif st.session_state.model_selected == "DistilBERT Transformer":
                     tags, scores = predict_bert(
@@ -138,12 +136,12 @@ if st.session_state.model_selected:
                         st.session_state.tokenizer,
                         st.session_state.mlb_bert
                     )
-                    st.subheader("🎯 Tags")
+                    st.subheader("Predicted Tags:")
                     st.write(", ".join(tags) if tags else "No tags found.")
-                    st.subheader("📊 Top Scores")
+                    st.subheader("Top Tag Probabilities:")
                     for tag, prob in scores:
                         st.write(f"**{tag}**: {prob:.3f}")
 
 # Footer
 st.markdown("---")
-st.caption("Built waith  using Streamlit, Transformers, and scikit-learn")
+st.caption("Built with ❤️ using Streamlit, Transformers, and scikit-learn")
