@@ -144,6 +144,13 @@ Each model is assessed based on:
 
 ---
 
+## Demo
+
+Check out the deployed Streamlit app here:  
+ [StackOverflow Tagging System Demo](https://stackoverflow-tagging-system.streamlit.app/)
+
+Explore how our models (Logistic Regression, HMM, and DistilBERT) automatically generate relevant tags for Stack Overflow-style questions in real-time!
+
 ## 👥 Contributors
 
 - [Akshay Keerthi AS]
