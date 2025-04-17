@@ -136,7 +136,7 @@ class HMM_Tagger:
         print('Training completed successfully.')
 
 
-
+    #not using this
     def predict1(self, sentence, top_n=5):
         print(f'Predicting tags for sentence: "{sentence}"')
         
@@ -193,7 +193,7 @@ class HMM_Tagger:
         
         return all_tags  # Return raw predicted tags
 
-
+    #Predict with only the emission probabilities
     def predict(self, sentence, top_n = 5):
         # print(f'Predicting tags for sentence: "{sentence}"')
 
@@ -235,6 +235,7 @@ class HMM_Tagger:
         print(f'Predicted Tags: {final_tags}')
         return final_tags
 
+    #Predict with the Transition probabilities and the emission probabilities
     def predict_with_viterbi(self, sentence, top_n=10):
         import numpy as np
         from collections import Counter
