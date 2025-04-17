@@ -40,13 +40,12 @@ fetch('https://api.example.com/data', {
 .catch(error => console.error(error));
 """
 
-
-
-
 # Predict raw tags for the combined sentence
-predicted_tags = hmm_tagger.predict(example_question_1) 
-# print(predicted_tags)
 
+tags = hmm_tagger.predict_with_viterbi(example_question_1)
+print("Predicted Tags:", tags)
+
+# hmm_tagger.predict1(example_question_1) 
 # Preprocess the input sentence and raw predicted tags
 def preprocess(text):
     return text.lower()

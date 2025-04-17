@@ -137,61 +137,61 @@ class HMM_Tagger:
 
 
 
-    # def predict(self, sentence, top_n=5):
-    #     print(f'Predicting tags for sentence: "{sentence}"')
+    def predict1(self, sentence, top_n=5):
+        print(f'Predicting tags for sentence: "{sentence}"')
         
-    #     # Preprocess sentence
-    #     words = self.preprocess(sentence)
-    #     num_tags = len(self.tags)
-    #     num_words = len(words)
+        # Preprocess sentence
+        words = self.preprocess(sentence)
+        num_tags = len(self.tags)
+        num_words = len(words)
         
-    #     # Initialize Viterbi and backpointer matrices
-    #     viterbi = np.zeros((num_tags, num_words))
-    #     backpointer = np.zeros((num_tags, num_words), dtype=int)
+        # Initialize Viterbi and backpointer matrices
+        viterbi = np.zeros((num_tags, num_words))
+        backpointer = np.zeros((num_tags, num_words), dtype=int)
 
-    #     # Initialize the Viterbi matrix for the first word
-    #     for tag_index in range(num_tags):
-    #         word_index = self.word_to_index.get(words[0], -1)
-    #         if word_index != -1:
-    #             viterbi[tag_index, 0] = self.pi[tag_index] * self.B[tag_index, word_index]
-    #         else:
-    #             viterbi[tag_index, 0] = self.pi[tag_index] * (1e-6)
+        # Initialize the Viterbi matrix for the first word
+        for tag_index in range(num_tags):
+            word_index = self.word_to_index.get(words[0], -1)
+            if word_index != -1:
+                viterbi[tag_index, 0] = self.pi[tag_index] * self.B[tag_index, word_index]
+            else:
+                viterbi[tag_index, 0] = self.pi[tag_index] * (1e-6)
 
-    #     # Iterate over the remaining words
-    #     for t in range(1, num_words):
-    #         word_index = self.word_to_index.get(words[t], -1)
-    #         if word_index == -1:
-    #             emission_probs = np.full(num_tags, 1e-6)
-    #         else:
-    #             emission_probs = np.array(self.B[:, word_index].todense()).flatten()
-    #             emission_probs[emission_probs == 0] = 1e-6  # Handle zero probabilities
+        # Iterate over the remaining words
+        for t in range(1, num_words):
+            word_index = self.word_to_index.get(words[t], -1)
+            if word_index == -1:
+                emission_probs = np.full(num_tags, 1e-6)
+            else:
+                emission_probs = np.array(self.B[:, word_index].todense()).flatten()
+                emission_probs[emission_probs == 0] = 1e-6  # Handle zero probabilities
 
-    #         transition_probs = self.A.multiply(viterbi[:, t - 1].reshape(-1, 1)).tocsc()
-    #         probs = transition_probs * emission_probs
+            transition_probs = self.A.multiply(viterbi[:, t - 1].reshape(-1, 1)).tocsc()
+            probs = transition_probs * emission_probs
 
-    #         best_prev_tags = np.argmax(probs, axis=0)
-    #         best_probs = np.max(probs, axis=0)
+            best_prev_tags = np.argmax(probs, axis=0)
+            best_probs = np.max(probs, axis=0)
 
-    #         viterbi[:, t] = best_probs
-    #         backpointer[:, t] = best_prev_tags
+            viterbi[:, t] = best_probs
+            backpointer[:, t] = best_prev_tags
 
-    #     best_path_prob = np.max(viterbi[:, -1])
-    #     best_last_tag = np.argmax(viterbi[:, -1])
+        best_path_prob = np.max(viterbi[:, -1])
+        best_last_tag = np.argmax(viterbi[:, -1])
 
-    #     best_path = [best_last_tag]
-    #     for t in range(num_words - 1, 0, -1):
-    #         best_path.insert(0, backpointer[best_path[0], t])
+        best_path = [best_last_tag]
+        for t in range(num_words - 1, 0, -1):
+            best_path.insert(0, backpointer[best_path[0], t])
 
-    #     predicted_tags = [self.tags[idx] for idx in best_path]
+        predicted_tags = [self.tags[idx] for idx in best_path]
 
-    #     # Split each predicted tag into individual tags (comma-separated)
-    #     all_tags = []
-    #     for tag in predicted_tags:
-    #         all_tags.extend(tag.split(','))  # Split by commas and collect individual tags
+        # Split each predicted tag into individual tags (comma-separated)
+        all_tags = []
+        for tag in predicted_tags:
+            all_tags.extend(tag.split(','))  # Split by commas and collect individual tags
         
-    #     print(f'Raw Predicted Tags: {all_tags}')
+        print(f'Raw Predicted Tags: {all_tags}')
         
-    #     return all_tags  # Return raw predicted tags
+        return all_tags  # Return raw predicted tags
 
 
     def predict(self, sentence, top_n = 10):
@@ -234,6 +234,71 @@ class HMM_Tagger:
         final_tags = [tag for tag, _ in sorted_subtags[:top_n]]
         # print(f'Predicted Tags: {final_tags}')
         return final_tags
+
+    def predict_with_viterbi(self, sentence, top_n=10):
+        import numpy as np
+        from collections import Counter
+
+        words = self.preprocess(sentence)
+        num_tags = len(self.tags)
+        num_words = len(words)
+
+        if num_words == 0 or num_tags == 0:
+            return []
+
+        A_dense = self.A.toarray()
+        B_dense = self.B.toarray()
+
+        viterbi = np.zeros((num_tags, num_words))
+        backpointer = np.zeros((num_tags, num_words), dtype=int)
+
+        # Initialization
+        for tag_index in range(num_tags):
+            word_index = self.word_to_index.get(words[0], -1)
+            emission = B_dense[tag_index, word_index] if word_index != -1 else 1e-6
+            emission = emission if emission != 0 else 1e-6
+            viterbi[tag_index, 0] = np.log(self.pi[tag_index] + 1e-10) + np.log(emission)
+
+        # Recursion
+        for t in range(1, num_words):
+            word_index = self.word_to_index.get(words[t], -1)
+            for curr_tag in range(num_tags):
+                emission = B_dense[curr_tag, word_index] if word_index != -1 else 1e-6
+                emission = emission if emission != 0 else 1e-6
+                emission_log = np.log(emission)
+
+                transitions = A_dense[:, curr_tag]
+                transitions[transitions == 0] = 1e-6
+                transition_log = np.log(transitions)
+                scores = viterbi[:, t - 1] + transition_log + emission_log
+                best_prev_tag = np.argmax(scores)
+                max_prob = scores[best_prev_tag]
+
+
+                viterbi[curr_tag, t] = max_prob
+                backpointer[curr_tag, t] = best_prev_tag
+
+        # Backtrack
+        best_last_tag = np.argmax(viterbi[:, -1])
+        best_path = [best_last_tag]
+        for t in range(num_words - 1, 0, -1):
+            best_path.insert(0, backpointer[best_path[0], t])
+
+        # Collect predicted compound tags
+        predicted_tags = [self.tags[i] for i in best_path]
+        
+
+        # Split compound tags
+        tag_counter = Counter()
+        for tag in predicted_tags:
+            for subtag in tag.split(','):
+                subtag = subtag.strip()
+                if subtag:
+                    tag_counter[subtag] += 1
+        
+        return [tag for tag, _ in tag_counter.most_common(top_n)]
+
+
 
 
 
