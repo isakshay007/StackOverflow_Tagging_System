@@ -194,7 +194,7 @@ class HMM_Tagger:
         return all_tags  # Return raw predicted tags
 
 
-    def predict(self, sentence, top_n = 10):
+    def predict(self, sentence, top_n = 5):
         # print(f'Predicting tags for sentence: "{sentence}"')
 
         words = self.preprocess(sentence)
@@ -232,7 +232,7 @@ class HMM_Tagger:
 
         # Return top-N clean tags
         final_tags = [tag for tag, _ in sorted_subtags[:top_n]]
-        # print(f'Predicted Tags: {final_tags}')
+        print(f'Predicted Tags: {final_tags}')
         return final_tags
 
     def predict_with_viterbi(self, sentence, top_n=10):
