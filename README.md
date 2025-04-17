@@ -1,56 +1,154 @@
-#Autonomous Tagging System for StackOverflow
+#  StackOverflow Autonomous Tagging System
 
-📌 Overview
-The Autonomous Tagging System aims to improve the accuracy and efficiency of StackOverflow’s tagging process using Natural Language Processing (NLP) and Machine Learning. By analyzing both question descriptions and code snippets, our model predicts relevant tags automatically, reducing errors and improving discoverability.
+The StackOverflow Autonomous Tagging System is a solution designed to automatically generate relevant and high-quality tags for questions posted on StackOverflow. Accurate tagging plays a crucial role in content discoverability, expert routing, and information retrieval on community-driven platforms. However, manual tagging is often inconsistent, subjective, and error-prone.
 
-🚀 Features
-Text & Code Analysis: Uses NLP techniques to extract key topics from question titles/descriptions and analyzes code snippets for relevant concepts.
-Tag Prediction: Predicts and ranks suggested tags with confidence scores.
-User Feedback Integration: Learns from user corrections to refine future predictions.
-Comparative Model Analysis: Implements and compares different approaches:
-Hidden Markov Model (HMM)
-Machine Learning Classifier
+This project uses a hybrid approach, combining both traditional machine learning techniques and modern deep learning models, to understand question semantics and predict tags with high precision.
 
-📂 Project Structure
-/project-root
-│── data/                 # Dataset and preprocessing scripts
-│── models/               # Model implementations (HMM, ML classifier, Transformer)
-│── notebooks/            # Jupyter notebooks for experiments
-│── src/                  # Main source code
-│── README.md             # This file
-│── requirements.txt      # Dependencies
-│── report/               # Documentation and final report
-│── scripts/              # Utility scripts
-│── tests/                # Unit tests
+---
+
+##  Goals
+
+- **Enhance Tag Discoverability**: Generate tags that accurately reflect question content to improve search visibility and content classification.
+- **Minimize Manual Errors**: Reduce inconsistent or missing tags with an automated, consistent tagging pipeline.
+- **Compare ML Models**: Evaluate traditional (HMM), classical (Logistic Regression), and deep learning (DistilBERT) approaches for tag prediction.
+- **Scalable Architecture**: Build a modular system that supports future feedback loops and active learning extensions.
+
+##  Models Used
+
+- **Hidden Markov Model (HMM)** 
+- **Logistic Regression** 
+- **DistilBERT** 
+---
+
+##  Features
+
+- **Multi-Model Inference**  
+  Supports Logistic Regression, Hidden Markov Model (HMM), and DistilBERT for tag prediction.
+- **Confidence-Based Tag Filtering**  
+  Filters tags based on customizable probability thresholds to ensure relevance.
+- **Interactive UI**  
+  Built with Streamlit, allowing users to select models and get real-time tag predictions.
+- **Model Benchmarking**  
+  Compare traditional, classical, and deep learning models on accuracy, speed, and scalability.
+- **Offline & Online Integration**  
+  Supports both local inference and online model fetching via Hugging Face Hub.
+---
+
+##  Project Structure
+
+```
+StackOverflow_Tagging_System/
+│
+├── data/    
+├── ml_models/               
+├── models/             
+├── notebooks/           
+├── src/                
+├── tests/              
+├── requirements.txt    
+└── README.md           
+```
+
+---
 
 
-📅 Project Timeline
-Week	Task
-1-2	Implement HMM Baseline
-3-4	Implement ML Classifier
-5	Compare results & refine models
-6	(If feasible) Experiment with a small Transformer model
-7	Prepare presentation & final report
+##  Setup & Installation
+
+Follow the steps below to set up and run the StackOverflow Tagging System on your local machine.
+
+### 1️ Clone the Repository
+
+Start by cloning the GitHub repository to your local system:
+
+```bash
+git clone https://github.com/isakshay007/StackOverflow_Tagging_System.git
+cd StackOverflow_Tagging_System
+
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Download spaCy model manually**
+   ```bash
+   python -m spacy download en_core_web_md
+   # or use this direct link:
+   # https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.8.0/en_core_web_md-3.8.0.tar.gz
+   ```
+
+---
+
+## Usage
+
+### 🖥 Launch the Web App
+```bash
+streamlit run src/tag_ui_app.py
+```
+
+---
+
+##  Models Implemented
+
+| Model               | Description                                                                 |
+|--------------------|-----------------------------------------------------------------------------|
+| Hidden Markov Model| Custom implementation trained on emission and transition probabilities.     |
+| Logistic Regression| TF-IDF based multi-label classifier using OneVsRest strategy.               |
+| DistilBERT         | Lightweight Transformer fine-tuned for tag classification with confidence. |
+
+---
+
+##  Evaluation Metrics
+
+Each model is assessed based on:
+
+- **Precision@k**
+- **Recall@k**
+- **F1 Score**
+- **Jaccard Similarity**
+- **Exact Match Ratio**
+- **Hamming Loss**
+- **Training & Inference Time**
 
 
-🔧 Setup & Installation
+---
 
-Clone the repository:
+##  Dependencies
 
-git clone https://github.com/your-repo/autonomous-tagging.git
+### Core Packages
+- `streamlit`
+- `pandas`
+- `numpy<2.0`
+- `joblib`
+- `tqdm`
 
-cd autonomous-tagging
+### Machine Learning
+- `scikit-learn`
+- `scipy`
 
+### NLP & Transformers
+- `spacy`
+- `transformers`
+- `torch`
 
-Install dependencies:
-pip install -r requirements.txt
+### Hugging Face Integration
+- `huggingface_hub`
+- `hf_xet` (optional)
 
+---
 
-Run the initial model:
-python src/main.py
+##  Troubleshooting
 
+- **spaCy model not found**: Ensure you've downloaded `en_core_web_md`.
+- **Missing `.pkl` files**: Run training scripts to generate them or download from HuggingFace.
+- **Slow transformer loading**: Ensure models are cached or consider running on GPU.
 
-📊 Evaluation Metrics
-We will compare the models based on: Accuracy of predicted tags vs. ground truth.
-Precision, Recall, F1-score for classification performance.
-Speed & Scalability of tag predictions.
+---
+
+## 👥 Contributors
+
+- [Akshay Keerthi AS]
+- [Taniskha Datar] 
+- [Zimo Xing]
+
+---
+

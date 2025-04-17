@@ -3,11 +3,9 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.metrics import f1_score, hamming_loss
 from hmm import HMM_Tagger
 
-# === Load dataset ===
 df = pd.read_csv("data/val_split.csv")  
 test_df = df.sample(n=500, random_state=42).reset_index(drop=True)
 
-# === Enhanced Evaluation ===
 def evaluate_model(model, test_data, k=5, log_to_csv=False, csv_path="hmm_evaluation_log.csv"):
     print("Evaluating...")
     total = 0
@@ -49,7 +47,6 @@ def evaluate_model(model, test_data, k=5, log_to_csv=False, csv_path="hmm_evalua
                 'predicted_tags': ', '.join(sorted(predicted_tags))
             })
 
-    # === Metrics ===
     mlb = MultiLabelBinarizer()
     Y_true = mlb.fit_transform(all_true_tags)
     Y_pred = mlb.transform(all_pred_tags)
@@ -79,9 +76,7 @@ def evaluate_model(model, test_data, k=5, log_to_csv=False, csv_path="hmm_evalua
         pd.DataFrame(log_rows).to_csv(csv_path, index=False)
         print(f"\nPrediction log saved to: {csv_path}")
 
-# === Load model and run evaluation ===
 hmm_tagger = HMM_Tagger()
 hmm_tagger.load_model("hmm_model3.pkl")
-
 
 evaluate_model(hmm_tagger, test_df, k=5, log_to_csv=True, csv_path="hmm_eval_log.csv")
